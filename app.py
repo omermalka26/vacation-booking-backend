@@ -17,14 +17,18 @@ from routes.like_routes import like_bp
 
 app = Flask(__name__)
 
-# Enable CORS for React frontend
-CORS(app, supports_credentials=True, origins=["http://localhost:3000", "http://127.0.0.1:3000"])
+# Enable CORS for React frontend (development and production)
+CORS(app, supports_credentials=True, origins=[
+    "http://localhost:3000", 
+    "http://127.0.0.1:3000",
+    "https://omermalka26.github.io"
+])
 
 # Serve static files (images)
 IMAGES_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'images')
 
-# Use a fixed secret key for development (change in production)
-app.config['JWT_SECRET_KEY'] = 'your-super-secret-jwt-key-change-in-production'
+# Use environment variable for secret key (with fallback for development)
+app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'your-super-secret-jwt-key-change-in-production')
 
 # Register the blueprints
 app.register_blueprint(user_bp)
@@ -56,5 +60,7 @@ Vacation.create_table()
 Like.create_table()
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000) 
+    # Get port from environment variable (for deployment) or use 5000
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=False, host='0.0.0.0', port=port) 
 
