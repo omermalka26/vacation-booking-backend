@@ -1,0 +1,11 @@
+from models.country import Country
+Country.insert("Israel")
+Country.insert("Italy")
+Country.insert("United States")
+Country.insert("Canada")
+Country.insert("Spain")
+Country.insert("China")
+Country.insert("France")
+Country.insert("United Kingdom")
+Country.insert("India")
+Country.insert("Japan")

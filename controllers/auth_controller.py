@@ -1,0 +1,111 @@
+from flask import request, session, g, jsonify
+from models.user import User 
+from werkzeug.security import check_password_hash
+import re
+
+class AuthController:
+    @staticmethod
+    def login_user():
+        if request.method == 'POST':
+            try:
+                data = request.get_json()
+                
+                if not data:
+                    return jsonify({'error': 'No data provided'}), 400
+                
+                error = None
+
+                if 'email' not in data:
+                    error = 'Email is required.'
+                elif 'password' not in data:
+                    error = 'Password is required.'
+                
+                if error:
+                    return jsonify({'error': error}), 400
+                
+                email = data['email']
+                password = data['password']
+               
+                if not re.fullmatch(r"[^@]+@[^@]+\.[^@]+", email):
+                    return jsonify({'error': 'Invalid email format.'}), 400
+
+                elif len(password) < 4:
+                    return jsonify({'error': 'Password must be at least 4 characters long.'}), 400
+                
+                result = User.get_by_email(email) 
+
+                if result is None:
+                    return jsonify({'error': 'Incorrect email or password.'}), 401
+                elif not check_password_hash(result['password_hash'], password):
+                    return jsonify({'error': 'Incorrect email or password.'}), 401
+
+                session.clear() 
+                session['user_id'] = result['user_id']
+                print("user logged in")
+                return jsonify({
+                    'message': 'login successful',
+                    'user': {
+                        'user_id': result['user_id'],
+                        'first_name': result['first_name'],
+                        'last_name': result['last_name'],
+                        'email': result['email'],
+                        'role_id': result['role_id']
+                    }
+                })
+                
+            except Exception as e:
+                print(f"Login error: {str(e)}")
+                return jsonify({'error': 'Internal server error'}), 500
+
+    @staticmethod
+    def register_user():
+        try:
+            data = request.get_json()
+                
+            if not data:
+                return jsonify({'error': 'No data provided'}), 400
+                
+            if not all(k in data for k in ['first_name', 'last_name', 'email', 'password']):
+                return jsonify({'error': 'Missing required fields'}), 400
+                
+            first_name = data['first_name']
+            last_name = data['last_name']
+            email = data['email']
+            password = data['password']
+            role_id = 1
+            
+            # Validation
+            if not first_name.strip() or not last_name.strip():
+                return jsonify({'error': 'First name and last name cannot be empty'}), 400
+                
+            if not re.fullmatch(r"[^@]+@[^@]+\.[^@]+", email):
+                return jsonify({'error': 'Invalid email format.'}), 400
+
+            elif len(password) < 4:
+                return jsonify({'error': 'Password must be at least 4 characters long.'}), 400
+            
+            result = User.insert(first_name, last_name, email, password, role_id)
+        
+            if result is None:
+                return jsonify({'error': 'Email already exists'}), 400
+                
+            print("user registered")
+            return jsonify({
+                'message': 'sign up successful',
+                'user': result
+            }), 201
+                
+        except Exception as e:
+            print(f"Registration error: {str(e)}")
+            return jsonify({'error': 'Internal server error'}), 500
+
+    @staticmethod
+    def logout_user():
+        try:
+            session.clear()
+            print("user logged out")
+            return jsonify({'message': 'logout successful'})
+        except Exception as e:
+            print(f"Logout error: {str(e)}")
+            return jsonify({'error': 'Internal server error'}), 500
+        
