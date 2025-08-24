@@ -19,4 +19,4 @@ def register():
 @auth_bp.route('/me', methods=['GET'])
 @token_required
 def get_current_user():
-    return jsonify({'user': g.user})
+    return jsonify(g.user)

@@ -2,11 +2,18 @@ from flask import jsonify, request
 from models.vacation import Vacation
 from datetime import datetime, date # Needed for date validation
 from constants import MAX_PRICE, MIN_PRICE
+import os
+from werkzeug.utils import secure_filename
 
 
 class VacationController:
     @staticmethod
     def insert_vacation():
+        # Check if this is a multipart form data request (file upload)
+        if request.content_type and 'multipart/form-data' in request.content_type:
+            return VacationController.insert_vacation_with_file()
+        
+        # Regular JSON request
         data = request.get_json()
 
         # --- 1. Check for missing required fields ---
@@ -42,7 +49,8 @@ class VacationController:
         if end_date_obj < start_date_obj:
             return jsonify({'error': 'Vacation end date cannot be before the start date.'}), 400
 
-        # --- 5. Check if start date is in the past ---
+        # --- 5. Check if start date is in the past (only for new vacations) ---
+        # For updates, we allow past dates since vacations might already have started
         today = date.today()
         if start_date_obj < today:
             return jsonify({'error': 'Vacation start date cannot be in the past.'}), 400
@@ -65,6 +73,80 @@ class VacationController:
         else:
             return jsonify(result), 201 # 201 Created for successful insertion
 
+    @staticmethod
+    def insert_vacation_with_file():
+        """Handle vacation creation with file upload"""
+        try:
+            # Get form data
+            vacation_description = request.form.get('vacation_description')
+            country_id = request.form.get('country_id')
+            vacation_start = request.form.get('vacation_start')
+            vacation_end = request.form.get('vacation_end')
+            price = request.form.get('price')
+            
+            # Check required fields
+            if not all([vacation_description, country_id, vacation_start, vacation_end, price]):
+                return jsonify({'error': 'Missing required fields'}), 400
+            
+            # Handle file upload
+            if 'image' not in request.files:
+                return jsonify({'error': 'No image file provided'}), 400
+            
+            file = request.files['image']
+            if file.filename == '':
+                return jsonify({'error': 'No image file selected'}), 400
+            
+            # Secure the filename and save the file
+            filename = secure_filename(file.filename)
+            
+            # Ensure images directory exists
+            images_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'images')
+            os.makedirs(images_dir, exist_ok=True)
+            
+            # Save the file
+            file_path = os.path.join(images_dir, filename)
+            file.save(file_path)
+            
+            # Validate price
+            try:
+                price_val = float(price)
+                if not (MIN_PRICE <= price_val <= MAX_PRICE):
+                    return jsonify({'error': f'Price must be a positive number and not exceed {MAX_PRICE}.'}), 400
+            except (ValueError, TypeError):
+                return jsonify({'error': 'Price must be a valid number.'}), 400
+            
+            # Validate dates
+            try:
+                start_date_obj = datetime.strptime(vacation_start, '%Y-%m-%d').date()
+                end_date_obj = datetime.strptime(vacation_end, '%Y-%m-%d').date()
+            except ValueError:
+                return jsonify({'error': 'Vacation dates must be in YYYY-MM-DD format.'}), 400
+            
+            if end_date_obj < start_date_obj:
+                return jsonify({'error': 'Vacation end date cannot be before the start date.'}), 400
+            
+            today = date.today()
+            if start_date_obj < today:
+                return jsonify({'error': 'Vacation start date cannot be in the past.'}), 400
+            
+            # Insert into database
+            result = Vacation.insert(
+                country_id=int(country_id),
+                vacation_description=vacation_description,
+                vacation_start=vacation_start,
+                vacation_end=vacation_end,
+                price=price_val,
+                picture_file_name=filename
+            )
+            
+            if 'error' in result:
+                return jsonify(result), 409
+            else:
+                return jsonify(result), 201
+                
+        except Exception as e:
+            return jsonify({'error': f'Error processing file upload: {str(e)}'}), 500
+
     
     @staticmethod
     def get_all_vacations():
@@ -80,7 +162,13 @@ class VacationController:
     
     @staticmethod
     def update_vacation(vacation_id):
+        # Check if this is a multipart form data request (file upload)
+        if request.content_type and 'multipart/form-data' in request.content_type:
+            return VacationController.update_vacation_with_file(vacation_id)
+        
+        # Regular JSON request
         data = request.get_json()
+        print(f"Update vacation {vacation_id} with data: {data}")  # Debug logging
 
         
         required_fields = [
@@ -119,12 +207,9 @@ class VacationController:
         if end_date_obj < start_date_obj:
             return jsonify({'error': 'Vacation end date cannot be before the start date.'}), 400
 
+        # For updates, we allow past dates since vacations might already have started
+        # No need to check if start date is in the past for updates
         
-        today = date.today()
-        if start_date_obj < today:
-            return jsonify({'error': 'Vacation start date cannot be in the past.'}), 400
-        
-      
         result = Vacation.update(vacation_id, **data)
         
        
@@ -136,6 +221,77 @@ class VacationController:
             return jsonify(result), 409
         return jsonify(result)
 
+    @staticmethod
+    def update_vacation_with_file(vacation_id):
+        """Handle vacation update with file upload"""
+        try:
+            # Get form data
+            vacation_description = request.form.get('vacation_description')
+            country_id = request.form.get('country_id')
+            vacation_start = request.form.get('vacation_start')
+            vacation_end = request.form.get('vacation_end')
+            price = request.form.get('price')
+            
+            # Check required fields
+            if not all([vacation_description, country_id, vacation_start, vacation_end, price]):
+                return jsonify({'error': 'Missing required fields'}), 400
+            
+            # Handle file upload
+            if 'image' not in request.files:
+                return jsonify({'error': 'No image file provided'}), 400
+            
+            file = request.files['image']
+            if file.filename == '':
+                return jsonify({'error': 'No image file selected'}), 400
+            
+            # Secure the filename and save the file
+            filename = secure_filename(file.filename)
+            
+            # Ensure images directory exists
+            images_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'images')
+            os.makedirs(images_dir, exist_ok=True)
+            
+            # Save the file
+            file_path = os.path.join(images_dir, filename)
+            file.save(file_path)
+            
+            # Validate price
+            try:
+                price_val = float(price)
+                if not (MIN_PRICE <= price_val <= MAX_PRICE):
+                    return jsonify({'error': f'Price must be a positive number and not exceed {MAX_PRICE}.'}), 400
+            except (ValueError, TypeError):
+                return jsonify({'error': 'Price must be a valid number.'}), 400
+            
+            # Validate dates
+            try:
+                start_date_obj = datetime.strptime(vacation_start, '%Y-%m-%d').date()
+                end_date_obj = datetime.strptime(vacation_end, '%Y-%m-%d').date()
+            except ValueError:
+                return jsonify({'error': 'Vacation dates must be in YYYY-MM-DD format.'}), 400
+            
+            if end_date_obj < start_date_obj:
+                return jsonify({'error': 'Vacation end date cannot be before the start date.'}), 400
+            
+            # Update in database with new filename
+            result = Vacation.update(vacation_id, 
+                country_id=int(country_id),
+                vacation_description=vacation_description,
+                vacation_start=vacation_start,
+                vacation_end=vacation_end,
+                price=price_val,
+                picture_file_name=filename
+            )
+            
+            if 'error' in result:
+                if "Vacation not found" in result['error']:
+                    return jsonify(result), 404
+                return jsonify(result), 409
+            else:
+                return jsonify(result)
+                
+        except Exception as e:
+            return jsonify({'error': f'Error processing file upload: {str(e)}'}), 500
 
     
     @staticmethod
@@ -144,3 +300,10 @@ class VacationController:
         if result is None:
             return jsonify({'error': 'Vacation not found'}), 404
         return jsonify(result)
+
+    @staticmethod
+    def get_user_liked_vacations():
+        from decorators.auth_decorator import g
+        user_id = g.user['user_id']
+        liked_vacations = Vacation.get_user_liked_vacations(user_id)
+        return jsonify({'liked_vacations': liked_vacations})

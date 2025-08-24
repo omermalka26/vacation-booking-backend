@@ -10,7 +10,6 @@ def insert_vacation():
     return VacationController.insert_vacation()
 
 @vacation_bp.route('/vacations', methods=['GET'])
-@token_required
 def get_all_vacations():
     return VacationController.get_all_vacations()
 
@@ -28,3 +27,8 @@ def update_vacation(vacation_id):
 @admin_required
 def delete_vacation(vacation_id):
     return VacationController.delete_vacation(vacation_id)
+
+@vacation_bp.route('/vacations/user-likes', methods=['GET'])
+@token_required
+def get_user_liked_vacations():
+    return VacationController.get_user_liked_vacations()

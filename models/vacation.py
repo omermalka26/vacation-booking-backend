@@ -58,7 +58,16 @@ class Vacation:
     def get_all():
         with Vacation.get_db_connection() as connection:
             cursor = connection.cursor()
-            sql = 'SELECT * FROM vacations ORDER BY vacation_start ASC'
+            sql = '''
+                SELECT v.*, COALESCE(l.likes_count, 0) as likes_count 
+                FROM vacations v 
+                LEFT JOIN (
+                    SELECT vacation_id, COUNT(*) as likes_count 
+                    FROM likes 
+                    GROUP BY vacation_id
+                ) l ON v.vacation_id = l.vacation_id 
+                ORDER BY v.vacation_start ASC
+            '''
             cursor.execute(sql)
             vacations = cursor.fetchall()
             cursor.close()
@@ -69,26 +78,37 @@ class Vacation:
                 vacation_start=vacation[3],
                 vacation_end=vacation[4],
                 price=vacation[5],
-                picture_file_name=vacation[6]
+                picture_file_name=vacation[6],
+                likes_count=vacation[7]
             ) for vacation in vacations]
     
     @staticmethod
     def get_by_id(vacation_id):
         with Vacation.get_db_connection() as connection:
             cursor = connection.cursor()
-            sql = 'SELECT * FROM vacations WHERE vacation_id = ?'
+            sql = '''
+                SELECT v.*, COALESCE(l.likes_count, 0) as likes_count 
+                FROM vacations v 
+                LEFT JOIN (
+                    SELECT vacation_id, COUNT(*) as likes_count 
+                    FROM likes 
+                    GROUP BY vacation_id
+                ) l ON v.vacation_id = l.vacation_id 
+                WHERE v.vacation_id = ?
+            '''
             cursor.execute(sql, (vacation_id,))
             vacation = cursor.fetchone()
             cursor.close()
             if vacation:
                 return dict(
                     vacation_id=vacation[0],
-                country_id=vacation[1],
-                vacation_description=vacation[2],
-                vacation_start=vacation[3],
-                vacation_end=vacation[4],
-                price=vacation[5],
-                picture_file_name=vacation[6]
+                    country_id=vacation[1],
+                    vacation_description=vacation[2],
+                    vacation_start=vacation[3],
+                    vacation_end=vacation[4],
+                    price=vacation[5],
+                    picture_file_name=vacation[6],
+                    likes_count=vacation[7]
                 )
             return None
     
@@ -100,7 +120,7 @@ class Vacation:
                 cursor.execute('SELECT * FROM vacations WHERE vacation_id = ?', (vacation_id,))
                 if not cursor.fetchone():
                     cursor.close()
-                    return None
+                    return {'error': 'Vacation not found'}
 
                 update_fields = []
                 values = []
@@ -110,7 +130,7 @@ class Vacation:
                 
                 if not update_fields:
                     cursor.close()
-                    return None
+                    return {'error': 'No fields to update'}
 
                 sql = f"UPDATE vacations SET {', '.join(update_fields)} WHERE vacation_id = ?"
                 values.append(vacation_id)
@@ -118,9 +138,12 @@ class Vacation:
                 connection.commit()
                 cursor.close()
                 return {'message': f"Vacation {vacation_id} updated successfully"}
-            except sqlite3.IntegrityError:
+            except sqlite3.IntegrityError as e:
                 cursor.close()
-                return None
+                return {'error': f"Database error: Could not update vacation due to a constraint violation. Details: {e}"}
+            except Exception as e:
+                cursor.close()
+                return {'error': f"An unexpected database error occurred during update: {e}"}
     
     @staticmethod
     def delete(vacation_id):
@@ -137,5 +160,16 @@ class Vacation:
             connection.commit()
             cursor.close()
             return {'message': f"Vacation {vacation_id} deleted successfully"}
+
+    @staticmethod
+    def get_user_liked_vacations(user_id):
+        """Get list of vacation IDs that a user has liked"""
+        with Vacation.get_db_connection() as connection:
+            cursor = connection.cursor()
+            sql = 'SELECT vacation_id FROM likes WHERE user_id = ?'
+            cursor.execute(sql, (user_id,))
+            liked_vacations = cursor.fetchall()
+            cursor.close()
+            return [row[0] for row in liked_vacations]
 
     
