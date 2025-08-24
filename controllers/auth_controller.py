@@ -1,4 +1,4 @@
-from flask import request, session, g, jsonify, current_app
+from flask import request, jsonify, current_app
 from models.user import User 
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt

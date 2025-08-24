@@ -1,6 +1,7 @@
 from flask import jsonify, request, g 
 from models.like import Like          
 from models.vacation import Vacation  
+
 class LikeController:
     @staticmethod
     def insert_like():
@@ -21,7 +22,6 @@ class LikeController:
         result = Like.insert(user_id=user_id, vacation_id=vacation_id)
 
         if 'error' in result:
-           
             if 'User has already liked this vacation' in result['error']:
                 return jsonify(result), 409 
             elif 'Invalid User ID or Vacation ID' in result['error']:
@@ -32,15 +32,11 @@ class LikeController:
         return jsonify(result), 201 
 
     @staticmethod
-    def delete_like():
+    def delete_like(vacation_id):
         user_id = g.user['user_id'] 
 
-        data = request.get_json()
-        if not data or 'vacation_id' not in data:
-            return jsonify({'error': 'Missing required field: vacation_id.'}), 400
-
         try:
-            vacation_id = int(data['vacation_id'])
+            vacation_id = int(vacation_id)
         except (ValueError, TypeError):
             return jsonify({'error': 'Invalid vacation_id format.'}), 400
         

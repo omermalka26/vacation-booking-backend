@@ -1,4 +1,4 @@
-from flask import Flask, session, g
+from flask import Flask
 from flask_cors import CORS
 import os
 import jwt
@@ -20,8 +20,8 @@ app = Flask(__name__)
 # Enable CORS for React frontend
 CORS(app, supports_credentials=True, origins=["http://localhost:3000", "http://127.0.0.1:3000"])
 
-app.secret_key = os.urandom(24)
-app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'your-secret-key-change-in-production')
+# Use a fixed secret key for development (change in production)
+app.config['JWT_SECRET_KEY'] = 'your-super-secret-jwt-key-change-in-production'
 
 # Register the blueprints
 app.register_blueprint(user_bp)
@@ -30,16 +30,6 @@ app.register_blueprint(country_bp)
 app.register_blueprint(vacation_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(like_bp)
-
-@app.before_request
-def load_logged_in_user():
-    user_id = session.get('user_id')
-
-    if user_id is None:
-        g.user = None
-    else:
-        from models.user import User 
-        g.user = User.get_by_id(user_id) 
 
 # Error handlers
 @app.errorhandler(404)

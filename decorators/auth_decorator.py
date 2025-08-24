@@ -2,6 +2,7 @@ from functools import wraps
 from flask import request, jsonify, g
 import jwt
 from flask import current_app
+from models.user import User
 
 def token_required(f):
     @wraps(f)
@@ -22,7 +23,6 @@ def token_required(f):
         try:
             # Decode the token
             data = jwt.decode(token, current_app.config['JWT_SECRET_KEY'], algorithms=["HS256"])
-            from models.user import User
             current_user = User.get_by_id(data['user_id'])
             
             if not current_user:
@@ -58,7 +58,6 @@ def admin_required(f):
         try:
             # Decode the token
             data = jwt.decode(token, current_app.config['JWT_SECRET_KEY'], algorithms=["HS256"])
-            from models.user import User
             current_user = User.get_by_id(data['user_id'])
             
             if not current_user:
