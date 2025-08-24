@@ -1,9 +1,22 @@
-from flask import request, session, g, jsonify
+from flask import request, session, g, jsonify, current_app
 from models.user import User 
 from werkzeug.security import check_password_hash
+import jwt
+from datetime import datetime, timedelta
 import re
 
 class AuthController:
+    @staticmethod
+    def generate_token(user_id):
+        """Generate JWT token for user"""
+        payload = {
+            'user_id': user_id,
+            'exp': datetime.utcnow() + timedelta(hours=24),  # Token expires in 24 hours
+            'iat': datetime.utcnow()
+        }
+        token = jwt.encode(payload, current_app.config['JWT_SECRET_KEY'], algorithm='HS256')
+        return token
+
     @staticmethod
     def login_user():
         if request.method == 'POST':
@@ -39,11 +52,13 @@ class AuthController:
                 elif not check_password_hash(result['password_hash'], password):
                     return jsonify({'error': 'Incorrect email or password.'}), 401
 
-                session.clear() 
-                session['user_id'] = result['user_id']
+                # Generate JWT token
+                token = AuthController.generate_token(result['user_id'])
+                
                 print("user logged in")
                 return jsonify({
                     'message': 'login successful',
+                    'token': token,
                     'user': {
                         'user_id': result['user_id'],
                         'first_name': result['first_name'],
@@ -88,10 +103,14 @@ class AuthController:
         
             if result is None:
                 return jsonify({'error': 'Email already exists'}), 400
+            
+            # Generate JWT token for newly registered user
+            token = AuthController.generate_token(result['user_id'])
                 
             print("user registered")
             return jsonify({
                 'message': 'sign up successful',
+                'token': token,
                 'user': result
             }), 201
                 
@@ -102,7 +121,7 @@ class AuthController:
     @staticmethod
     def logout_user():
         try:
-            session.clear()
+            # For JWT, logout is handled on the client side by removing the token
             print("user logged out")
             return jsonify({'message': 'logout successful'})
         except Exception as e:

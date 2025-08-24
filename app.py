@@ -1,6 +1,8 @@
 from flask import Flask, session, g
 from flask_cors import CORS
 import os
+import jwt
+from datetime import datetime, timedelta
 from models.role import Role
 from models.user import User
 from models.country import Country
@@ -19,6 +21,7 @@ app = Flask(__name__)
 CORS(app, supports_credentials=True, origins=["http://localhost:3000", "http://127.0.0.1:3000"])
 
 app.secret_key = os.urandom(24)
+app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'your-secret-key-change-in-production')
 
 # Register the blueprints
 app.register_blueprint(user_bp)

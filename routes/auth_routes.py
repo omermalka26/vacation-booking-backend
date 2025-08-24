@@ -1,5 +1,6 @@
 from flask import Blueprint, g, jsonify
 from controllers.auth_controller import AuthController
+from decorators.auth_decorator import token_required
 
 auth_bp = Blueprint('auth_bp', __name__)
 
@@ -16,7 +17,6 @@ def register():
     return AuthController.register_user()
 
 @auth_bp.route('/me', methods=['GET'])
+@token_required
 def get_current_user():
-    if g.user is None:
-        return jsonify({'error': 'Not authenticated'}), 401
     return jsonify({'user': g.user})
