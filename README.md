@@ -1,249 +1,282 @@
-# Vacation Booking API
+# Vacation Booking System - Backend API
 
-Backend API for a vacation booking system built with Flask and JWT authentication.
+A Flask-based REST API for a vacation booking system with JWT authentication, file uploads, and SQLite database.
 
-## Setup
+## 🚀 Features
 
-1. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+- **JWT Authentication**: Secure user authentication and authorization
+- **RESTful API**: Complete CRUD operations for vacations
+- **File Upload**: Image upload and serving for vacation photos
+- **Role-Based Access**: Admin and user role management
+- **Like System**: User vacation likes and statistics
+- **Database Management**: SQLite with proper schema design
 
-2. Run the application:
-```bash
-python app.py
-```
+## 🛠️ Tech Stack
 
-The server will run on `http://localhost:5000`
+- **Backend**: Flask, SQLite, PyJWT
+- **Authentication**: JWT tokens with role-based access
+- **File Handling**: Werkzeug, Pillow for image processing
+- **CORS**: Flask-CORS for cross-origin requests
+- **Database**: SQLite with SQLAlchemy-style models
 
-## Authentication
-
-This API uses JWT (JSON Web Tokens) for authentication. After login/register, you'll receive a token that should be included in the Authorization header for protected routes.
-
-**Format:** `Authorization: Bearer <your-token>`
-
-## API Endpoints
-
-### Authentication
-
-#### POST /login
-Login with email and password
-```json
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-```
-
-**Response:**
-```json
-{
-  "message": "login successful",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "user_id": 1,
-    "first_name": "John",
-    "last_name": "Doe",
-    "email": "user@example.com",
-    "role_id": 1
-  }
-}
-```
-
-#### POST /register
-Register a new user
-```json
-{
-  "first_name": "John",
-  "last_name": "Doe",
-  "email": "john@example.com",
-  "password": "password123"
-}
-```
-
-**Response:**
-```json
-{
-  "message": "sign up successful",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "user_id": 1,
-    "first_name": "John",
-    "last_name": "Doe",
-    "email": "john@example.com",
-    "role_id": 1
-  }
-}
-```
-
-#### POST /logout
-Logout current user (client-side token removal)
-
-#### GET /me
-Get current user information (requires JWT token)
-
-### Users
-
-#### GET /users
-Get all users (requires admin role + JWT token)
-
-#### POST /users
-Create a new user (requires admin role + JWT token)
-```json
-{
-  "first_name": "John",
-  "last_name": "Doe",
-  "email": "john@example.com",
-  "password": "password123",
-  "role_id": 1
-}
-```
-
-#### PUT /users/{user_id}
-Update user (requires admin role + JWT token)
-
-#### DELETE /users/{user_id}
-Delete user (requires admin role + JWT token)
-
-### Vacations
-
-#### GET /vacations
-Get all vacations (requires JWT token)
-
-#### POST /vacations
-Create a new vacation (requires admin role + JWT token)
-```json
-{
-  "country_id": 1,
-  "vacation_description": "Amazing vacation in Italy",
-  "vacation_start": "2024-06-01",
-  "vacation_end": "2024-06-07",
-  "price": 1500.00,
-  "picture_file_name": "italy.jpg"
-}
-```
-
-#### GET /vacations/{vacation_id}
-Get specific vacation (requires JWT token)
-
-#### PUT /vacations/{vacation_id}
-Update vacation (requires admin role + JWT token)
-
-#### DELETE /vacations/{vacation_id}
-Delete vacation (requires admin role + JWT token)
-
-### Countries
-
-#### GET /countries
-Get all countries (public - no authentication required)
-
-#### POST /countries
-Create a new country (requires admin role + JWT token)
-
-#### GET /countries/{country_id}
-Get specific country (public - no authentication required)
-
-#### PUT /countries/{country_id}
-Update country (requires admin role + JWT token)
-
-#### DELETE /countries/{country_id}
-Delete country (requires admin role + JWT token)
-
-### Likes
-
-#### POST /likes
-Like a vacation (requires JWT token)
-```json
-{
-  "vacation_id": 1
-}
-```
-
-#### DELETE /likes/{vacation_id}
-Unlike a vacation (requires JWT token)
-
-## Database Schema
-
-### Users
-- user_id (PRIMARY KEY)
-- first_name
-- last_name
-- email (UNIQUE)
-- password (hashed)
-- role_id (FOREIGN KEY)
-
-### Roles
-- role_id (PRIMARY KEY)
-- role_name
-
-### Countries
-- country_id (PRIMARY KEY)
-- country_name
-- country_description
-- country_picture
-
-### Vacations
-- vacation_id (PRIMARY KEY)
-- country_id (FOREIGN KEY)
-- vacation_description
-- vacation_start
-- vacation_end
-- price
-- picture_file_name
-
-### Likes
-- like_id (PRIMARY KEY)
-- user_id (FOREIGN KEY)
-- vacation_id (FOREIGN KEY)
-
-## CORS Configuration
-
-The API is configured to accept requests from:
-- http://localhost:3000
-- http://127.0.0.1:3000
-
-## JWT Token
-
-- **Expiration:** 24 hours
-- **Algorithm:** HS256
-- **Header Format:** `Authorization: Bearer <token>`
-
-## Error Responses
-
-All error responses follow this format:
-```json
-{
-  "error": "Error message"
-}
-```
-
-Common HTTP status codes:
-- 200: Success
-- 201: Created
-- 400: Bad Request
-- 401: Unauthorized (missing or invalid token)
-- 403: Forbidden (insufficient permissions)
-- 404: Not Found
-- 500: Internal Server Error
-
-## Testing with Postman
-
-1. **Register/Login** to get a JWT token
-2. **Add Authorization header** to protected routes:
-   - Key: `Authorization`
-   - Value: `Bearer <your-token>`
-3. **Test protected endpoints** like `/me`, `/vacations`, etc.
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 Project/
-├── app.py                 # Main Flask application
-├── requirements.txt       # Python dependencies
-├── decorators/
-│   └── auth_decorator.py  # JWT authentication decorators
-├── models/               # Database models
-├── controllers/          # Business logic
+├── controllers/          # Business logic layer
+│   ├── auth_controller.py
+│   ├── vacation_controller.py
+│   └── country_controller.py
+├── models/              # Database models
+│   ├── user.py
+│   ├── vacation.py
+│   ├── country.py
+│   └── like.py
 ├── routes/              # API endpoints
-└── images/              # Static images
+│   ├── auth_routes.py
+│   ├── vacation_routes.py
+│   └── country_routes.py
+├── decorators/          # Authentication decorators
+│   └── auth_decorators.py
+├── images/              # Static image files
+├── app.py              # Main Flask application
+├── constants.py        # Configuration constants
+├── requirements.txt    # Python dependencies
+└── projectdb.db       # SQLite database
 ```
+
+## 🚀 Installation & Setup
+
+1. **Clone the repository**:
+   ```bash
+   git clone <backend-repo-url>
+   cd vacation-booking-backend
+   ```
+
+2. **Create virtual environment**:
+   ```bash
+   python -m venv venv
+   ```
+
+3. **Activate virtual environment**:
+   - Windows: `venv\Scripts\activate`
+   - macOS/Linux: `source venv/bin/activate`
+
+4. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+5. **Initialize database** (if needed):
+   ```bash
+   python init_roles.py
+   python init_countries.py
+   ```
+
+6. **Start the server**:
+   ```bash
+   python app.py
+   ```
+
+The API will run on `http://localhost:5000`
+
+## 🔗 Frontend Repository
+
+This backend serves a separate React frontend. You'll need to:
+
+1. **Clone the frontend repository**:
+   ```bash
+   git clone <frontend-repo-url>
+   cd vacation-booking-frontend
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   cd client
+   npm install
+   ```
+
+3. **Start the frontend**:
+   ```bash
+   npm start
+   ```
+
+The frontend will run on `http://localhost:3000`
+
+## 🔐 Authentication
+
+### Default Admin User
+- **Email**: admin@admin.com
+- **Password**: admin123
+
+### JWT Token Structure
+```json
+{
+  "user_id": 1,
+  "email": "user@example.com",
+  "role": "admin",
+  "exp": 1234567890
+}
+```
+
+## 📝 API Endpoints
+
+### Authentication
+- `POST /auth/register` - User registration
+- `POST /auth/login` - User login
+- `GET /auth/me` - Get current user info
+
+### Vacations
+- `GET /vacations` - Get all vacations
+- `GET /vacations/:id` - Get specific vacation
+- `POST /vacations` - Create vacation (admin only)
+- `PUT /vacations/:id` - Update vacation (admin only)
+- `DELETE /vacations/:id` - Delete vacation (admin only)
+- `GET /vacations/user-likes` - Get user's liked vacations
+
+### Countries
+- `GET /countries` - Get all countries
+
+### Likes
+- `POST /likes` - Add like to vacation
+- `DELETE /likes` - Remove like from vacation
+
+## 🗄️ Database Schema
+
+### Users Table
+```sql
+CREATE TABLE users (
+    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    role_id INTEGER DEFAULT 2
+);
+```
+
+### Vacations Table
+```sql
+CREATE TABLE vacations (
+    vacation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    vacation_description TEXT NOT NULL,
+    country_id INTEGER NOT NULL,
+    vacation_start DATE NOT NULL,
+    vacation_end DATE NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    picture_file_name TEXT
+);
+```
+
+### Countries Table
+```sql
+CREATE TABLE countries (
+    country_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    country_name TEXT UNIQUE NOT NULL
+);
+```
+
+### Likes Table
+```sql
+CREATE TABLE likes (
+    like_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    vacation_id INTEGER NOT NULL,
+    UNIQUE(user_id, vacation_id)
+);
+```
+
+## 🔧 Configuration
+
+### Environment Variables
+Create a `.env` file for production:
+```env
+SECRET_KEY=your-secret-key-here
+FLASK_ENV=production
+DATABASE_URL=your-database-url
+```
+
+### CORS Configuration
+The API is configured to accept requests from:
+- `http://localhost:3000` (development)
+- Your production frontend domain
+
+## 📁 File Upload
+
+### Image Storage
+- Images are stored in the `images/` directory
+- Supported formats: JPG, PNG, GIF
+- File size limit: 16MB
+- Automatic filename generation for security
+
+### Image Serving
+Images are served via `/images/<filename>` endpoint for security and performance.
+
+## 🚀 Deployment
+
+### Production Setup
+1. **Set environment variables**:
+   ```bash
+   export FLASK_ENV=production
+   export SECRET_KEY=your-secret-key
+   ```
+
+2. **Install production dependencies**:
+   ```bash
+   pip install gunicorn
+   ```
+
+3. **Run with Gunicorn**:
+   ```bash
+   gunicorn -w 4 -b 0.0.0.0:5000 app:app
+   ```
+
+### Docker Deployment
+```dockerfile
+FROM python:3.9-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+EXPOSE 5000
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "app:app"]
+```
+
+## 🔒 Security Features
+
+- **JWT Authentication**: Secure token-based authentication
+- **Password Hashing**: bcrypt for password security
+- **CORS Protection**: Controlled cross-origin access
+- **Input Validation**: Comprehensive request validation
+- **File Upload Security**: File type and size validation
+
+## 🧪 Testing
+
+### Manual Testing
+Use tools like Postman or curl to test endpoints:
+
+```bash
+# Login
+curl -X POST http://localhost:5000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@admin.com","password":"admin123"}'
+
+# Get vacations
+curl -X GET http://localhost:5000/vacations
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+**Note**: This is the backend repository. Make sure to also set up the frontend repository for the complete application.
