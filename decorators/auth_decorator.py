@@ -3,6 +3,7 @@ from flask import request, jsonify, g
 import jwt
 from flask import current_app
 from models.user import User
+from constants import ADMIN_ROLE_ID
 
 def token_required(f):
     @wraps(f)
@@ -63,8 +64,8 @@ def admin_required(f):
             if not current_user:
                 return jsonify({'error': 'Invalid token'}), 401
             
-            # Check if user is admin (role_id = 2)
-            if current_user['role_id'] != 2:
+            # Check if user is admin
+            if current_user['role_id'] != ADMIN_ROLE_ID:
                 return jsonify({'error': 'Admin access required'}), 403
                 
             g.user = current_user

@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, g
+from flask import Blueprint, jsonify
 from controllers.vacation_controller import VacationController
 from decorators.auth_decorator import token_required, admin_required
 

@@ -1,6 +1,7 @@
 from flask import jsonify, request
 from models.vacation import Vacation
 from datetime import datetime, date # Needed for date validation
+from constants import MAX_PRICE, MIN_PRICE
 
 
 class VacationController:
@@ -22,8 +23,8 @@ class VacationController:
         try:
             # Convert price to float immediately for validation and consistency
             price_val = float(data['price']) 
-            if not (0 <= price_val <= 10000):
-                return jsonify({'error': 'Price must be a positive number and not exceed 10,000.'}), 400
+            if not (MIN_PRICE <= price_val <= MAX_PRICE):
+                return jsonify({'error': f'Price must be a positive number and not exceed {MAX_PRICE}.'}), 400
         except (ValueError, TypeError):
             return jsonify({'error': 'Price must be a valid number.'}), 400
 
@@ -98,8 +99,8 @@ class VacationController:
       
         try:
             price_val = float(data['price'])
-            if not (0 <= price_val <= 10000):
-                return jsonify({'error': 'Price must be a positive number and not exceed 10,000.'}), 400
+            if not (MIN_PRICE <= price_val <= MAX_PRICE):
+                return jsonify({'error': f'Price must be a positive number and not exceed {MAX_PRICE}.'}), 400
             data['price'] = price_val
         except (ValueError, TypeError):
             return jsonify({'error': 'Price must be a valid number.'}), 400

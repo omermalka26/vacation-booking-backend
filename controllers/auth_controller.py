@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 from datetime import datetime, timedelta
 import re
+from constants import USER_ROLE_ID, JWT_EXPIRATION_HOURS, MIN_PASSWORD_LENGTH
 
 class AuthController:
     @staticmethod
@@ -11,7 +12,7 @@ class AuthController:
         """Generate JWT token for user"""
         payload = {
             'user_id': user_id,
-            'exp': datetime.utcnow() + timedelta(hours=24),  # Token expires in 24 hours
+            'exp': datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS),
             'iat': datetime.utcnow()
         }
         token = jwt.encode(payload, current_app.config['JWT_SECRET_KEY'], algorithm='HS256')
@@ -42,8 +43,8 @@ class AuthController:
                 if not re.fullmatch(r"[^@]+@[^@]+\.[^@]+", email):
                     return jsonify({'error': 'Invalid email format.'}), 400
 
-                elif len(password) < 4:
-                    return jsonify({'error': 'Password must be at least 4 characters long.'}), 400
+                elif len(password) < MIN_PASSWORD_LENGTH:
+                    return jsonify({'error': f'Password must be at least {MIN_PASSWORD_LENGTH} characters long.'}), 400
                 
                 result = User.get_by_email(email) 
 
@@ -87,7 +88,7 @@ class AuthController:
             last_name = data['last_name']
             email = data['email']
             password = data['password']
-            role_id = 1
+            role_id = USER_ROLE_ID
             
             # Validation
             if not first_name.strip() or not last_name.strip():
@@ -96,8 +97,8 @@ class AuthController:
             if not re.fullmatch(r"[^@]+@[^@]+\.[^@]+", email):
                 return jsonify({'error': 'Invalid email format.'}), 400
 
-            elif len(password) < 4:
-                return jsonify({'error': 'Password must be at least 4 characters long.'}), 400
+            elif len(password) < MIN_PASSWORD_LENGTH:
+                return jsonify({'error': f'Password must be at least {MIN_PASSWORD_LENGTH} characters long.'}), 400
             
             # Hash password before sending to model
             password_hash = generate_password_hash(password)

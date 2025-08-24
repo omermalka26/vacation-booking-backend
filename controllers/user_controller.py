@@ -2,6 +2,7 @@ from flask import jsonify, request
 from models.user import User
 from models.role import Role
 from werkzeug.security import generate_password_hash
+from constants import USER_ROLE_ID, ADMIN_ROLE_ID
 
 class UserController:
     @staticmethod
@@ -14,7 +15,7 @@ class UserController:
                 return jsonify({'error': 'Invalid role_id format'}), 400
             if not Role.get_by_id(data['role_id']):
                 return jsonify({'error': 'Role not found'}), 404
-            if data['role_id'] == 2:
+            if data['role_id'] == ADMIN_ROLE_ID:
                 return jsonify({'error': 'Cannot create admin user'}), 403
         
         # Hash password before sending to model
@@ -25,7 +26,7 @@ class UserController:
             last_name=data['last_name'],
             email=data['email'],
             password_hash=password_hash,
-            role_id=data['role_id'] if 'role_id' in data else 1  # Default to role_id 1 if not provided
+            role_id=data['role_id'] if 'role_id' in data else USER_ROLE_ID  # Default to USER_ROLE_ID if not provided
         )
         
         if result is None:
@@ -51,7 +52,7 @@ class UserController:
         if not data or not all(k in data for k in ['first_name', 'last_name', 'email', 'password']):
             return jsonify({'error': 'Missing required fields'}), 400
         if 'role_id' in data:
-            if data['role_id'] == 2:
+            if data['role_id'] == ADMIN_ROLE_ID:
                 return jsonify({'error': 'Cannot update to admin'}), 403
         
         # Hash password if it's being updated

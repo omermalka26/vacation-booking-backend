@@ -1,5 +1,6 @@
 from flask import jsonify, request
 from models.role import Role
+from constants import USER_ROLE_ID, ADMIN_ROLE_ID
 
 class RoleController:
     @staticmethod
@@ -30,7 +31,7 @@ class RoleController:
     
     @staticmethod
     def update_role(role_id):
-        if role_id == 1 or role_id == 2:
+        if role_id == USER_ROLE_ID or role_id == ADMIN_ROLE_ID:
             return jsonify({'error':'cannot update system roles'}), 400
         data = request.get_json()
         if not data:
@@ -42,7 +43,7 @@ class RoleController:
     
     @staticmethod
     def delete_role(role_id):
-        if role_id == 1 or role_id == 2:
+        if role_id == USER_ROLE_ID or role_id == ADMIN_ROLE_ID:
             return jsonify({'error':'cannot delete system roles'})
         result = Role.delete(role_id)
         if result is None:
