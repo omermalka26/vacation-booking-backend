@@ -1,6 +1,6 @@
 from flask import request, session, g, jsonify, current_app
 from models.user import User 
-from werkzeug.security import check_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 from datetime import datetime, timedelta
 import re
@@ -99,7 +99,9 @@ class AuthController:
             elif len(password) < 4:
                 return jsonify({'error': 'Password must be at least 4 characters long.'}), 400
             
-            result = User.insert(first_name, last_name, email, password, role_id)
+            # Hash password before sending to model
+            password_hash = generate_password_hash(password)
+            result = User.insert(first_name, last_name, email, password_hash, role_id)
         
             if result is None:
                 return jsonify({'error': 'Email already exists'}), 400

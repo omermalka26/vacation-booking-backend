@@ -1,5 +1,4 @@
 import sqlite3
-from werkzeug.security import generate_password_hash, check_password_hash
 
 class User:
     @staticmethod
@@ -23,7 +22,10 @@ class User:
             cursor.close()
     
     @staticmethod
-    def insert(first_name, last_name, email, password, role_id):
+    def insert(first_name, last_name, email, password_hash, role_id):
+        """
+        Insert a new user with already hashed password
+        """
         with User.get_db_connection() as connection:
             cursor = connection.cursor()
             cursor.execute("PRAGMA foreign_keys = ON;")
@@ -31,9 +33,7 @@ class User:
                 sql = '''insert into users 
                         (first_name, last_name, email, password, role_id)
                         values(?, ?, ?, ?, ?)'''
-                cursor.execute(sql, (first_name, last_name, email, 
-                                   generate_password_hash(password), 
-                                   role_id))
+                cursor.execute(sql, (first_name, last_name, email, password_hash, role_id))
                 user_id = cursor.lastrowid
                 connection.commit()
                 cursor.close()
@@ -115,8 +115,6 @@ class User:
                 update_fields = []
                 values = []
                 for key, value in kwargs.items():
-                    if key == 'password':
-                        value = generate_password_hash(value)
                     update_fields.append(f"{key} = ?")
                     values.append(value)
                 
