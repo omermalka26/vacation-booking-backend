@@ -107,7 +107,7 @@ The frontend will run on `http://localhost:3000`
 
 ### Default Admin User
 - **Email**: admin@admin.com
-- **Password**: admin123
+- **Password**: admin
 
 ### JWT Token Structure
 ```json
